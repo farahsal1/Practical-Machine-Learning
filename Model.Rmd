@@ -1,0 +1,69 @@
+---
+title: "Machine Learning Assignment"
+author: "Farah Salahuddin"
+date: "December 27, 2015"
+output: html_document
+---
+
+#Machine Learning Model
+
+The goal of the project is to create a prediction model for classe variable in the Exercise Dataset. For this purpose, I downloaded the training and test data sets, and placed aside the test data set, creating the model on only the training set.
+
+```{r, echo=TRUE}
+setwd("C:/Users/farah_2/Documents/Practical Machine Learning")
+
+library(caret)
+
+training<-read.table("pml-training.csv",sep=",",header=TRUE,na.strings="NA")
+testing<-read.table("pml-testing.csv",sep=",",header=TRUE, na.strings="NA")
+
+```
+
+I then went on to apply cross validation on the training set, so that the model could be tested on small samples of the training set to make it as accurate as possible.
+
+```{r, echo=TRUE}
+train_control<-trainControl(method="cv",number=10)
+
+
+```
+
+Looking at the dataset, it is evident that there are a huge number of variables that can be used as predictors
+
+```{r,echo=TRUE}
+dim(training)
+colnames(training)
+```
+
+I plotted the classe variable against user name, and to see the structure of the data, just to get an idea of how the data looked. I also plotted the classe variable against a number of random predictors. Since there are too many predictors, that did not give much information about the data.
+
+```{r,echo=TRUE}
+plot(training$classe,data=training, xlab="Classe", ylab="Count")
+plot(classe~user_name, data=training,ylab="Classe",xlab="User Name")
+featurePlot(x=training[,c(5:10)],y=training$classe,plot="pairs")
+```
+Since the values of classe variable seemed pretty balanced in terms of variance, it was decided that this variable does not need to be preprocessed.
+
+
+I then sorted and cleaned the training and testing tests such that their variables were the same except for the classe variable. Near Zero Variance also got rid of variables with insignificant variance in the data set.
+
+```{r,echo=TRUE}
+training1<-training[,-nearZeroVar(training)]
+```
+
+
+Finally I tried to fit a random forest model on the data using the train function:
+```{r,echo=TRUE}
+set.seed(1234)
+modelfit<-train(classe~.,data=training1,trControl=train_control,method="rf",prox=TRUE)
+print(modelfit$finalModel)
+plot(modelfit$finalModel, main="Final Model Optimal Number of Trees")
+```
+We can see that the out-of-bag error rate is only 0.74% which means that the model is very good predictor of the classe variable. The confusion matrix further details the error rate.
+
+
+Here are the variables which were found to be very imporant:
+
+```{r,echo=TRUE}
+varImp(modelfit)
+```
+
